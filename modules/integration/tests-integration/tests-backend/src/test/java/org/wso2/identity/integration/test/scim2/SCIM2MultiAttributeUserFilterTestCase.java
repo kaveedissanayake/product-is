@@ -398,8 +398,6 @@ public class SCIM2MultiAttributeUserFilterTestCase extends ISIntegrationTest {
     }
 
     private String getAuthzHeader() {
-
-        System.out.println("adminUsernamefilter: " + adminUsername + " adminPasswordfilter: " + adminPassword);
         return "Basic " + Base64.encodeBase64String((adminUsername + ":" + adminPassword).getBytes()).trim();
     }
 
