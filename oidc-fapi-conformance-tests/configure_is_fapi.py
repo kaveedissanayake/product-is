@@ -14,6 +14,10 @@ import base64
 from config import browser_configuration
 from config.client_configs import client_configs
 
+# Network safety defaults (overridable via env vars)
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
+VERIFY_TLS = os.getenv("VERIFY_TLS", "false").lower() in ("1", "true", "yes")
+
 def decode_secret(secret):
     decoded_string=base64.b64decode(secret+"=").decode("utf-8")
     decoded_json = json.loads(decoded_string)
@@ -33,8 +37,13 @@ def dcr(app_json):
     DCR_BODY['ext_param_client_secret'] = app_json.get("client_secret")
     DCR_BODY['require_pushed_authorization_requests'] = app_json.get("require_pushed_authorization_requests")
     try:
-        response = requests.post(url=constants.DCR_ENDPOINT, headers=constants.HEADERS_WITH_AUTH,
-                                 data=json.dumps(DCR_BODY), verify=False)
+        response = requests.post(
+            url=constants.DCR_ENDPOINT,
+            headers=constants.HEADERS_WITH_AUTH,
+            data=json.dumps(DCR_BODY),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -49,8 +58,12 @@ def dcr(app_json):
 # get application id of the service provider using the SP name
 def get_application_id_by_sp_name(name):
     try:
-        response = requests.get(url=constants.APPLICATION_ENDPOINT + "?filter=name+eq+" + name,
-                                headers=constants.HEADERS_WITH_AUTH, verify=False)
+        response = requests.get(
+            url=constants.APPLICATION_ENDPOINT + "?filter=name+eq+" + name,
+            headers=constants.HEADERS_WITH_AUTH,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         response_json = json.loads(response.content)
         application_id = response_json['applications'][0]['id']
@@ -69,8 +82,13 @@ def set_application_scopes_for_consent(application_id):
     print(">>> Setting Application scope claims.")
     try:
         body = json.dumps(constants.SET_SCOPE_CLAIMS_BODY_PAYLOAD)
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id,
-                                headers=constants.HEADERS_WITH_AUTH, data=body, verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=constants.HEADERS_WITH_AUTH,
+            data=body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -89,8 +107,13 @@ def set_hybridFlow_config(application_id):
         app_details = get_service_provider_details(application_id)
         app_details['hybridFlow'] = constants.ENABLE_HYBRID_FLOW
         body = json.dumps(app_details)
-        response = requests.put(url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
-                                headers=constants.HEADERS_WITH_AUTH, data=body, verify=False)
+        response = requests.put(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
+            headers=constants.HEADERS_WITH_AUTH,
+            data=body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -107,8 +130,13 @@ def disable_skipping_consent(application_id):
     print(">>> Setting Skip Login consent to false.")
     try:
         body = json.dumps(constants.DISABLE_SKIP_CONSENT_BODY_PAYLOAD)
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id,
-                                headers=constants.HEADERS_WITH_AUTH, data=body, verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=constants.HEADERS_WITH_AUTH,
+            data=body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -123,8 +151,12 @@ def disable_skipping_consent(application_id):
 # returns service provider details with given application id
 def get_service_provider_details(application_id):
     try:
-        response = requests.get(url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
-                                headers=constants.HEADERS_WITH_AUTH, verify=False)
+        response = requests.get(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
+            headers=constants.HEADERS_WITH_AUTH,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         response_json = json.loads(response.content)
         return response_json
@@ -142,8 +174,13 @@ def configure_acr(application_id):
 
     print(">>> Setting up advanced authentication scripts...")
     try:
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id, 
-                                  headers=constants.HEADERS_WITH_AUTH, data=body, verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=constants.HEADERS_WITH_AUTH,
+            data=body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -240,15 +277,19 @@ def json_config_builder(service_provider_1, service_provider_2, output_file_path
     }
 
     json_config = json.dumps(config, indent=4)
-    f = open(output_file_path, "w")
-    f.write(json_config)
-    f.close()
+    with open(output_file_path, "w") as f:
+        f.write(json_config)
 
 def createNewUser(username, password):
     try:
         body = {"userName":username,"password":password}
-        response = requests.post(url=constants.CREATE_USER_ENDPOINT, headers=constants.HEADERS_WITH_AUTH,
-                                 data=json.dumps(body), verify=False)
+        response = requests.post(
+            url=constants.CREATE_USER_ENDPOINT,
+            headers=constants.HEADERS_WITH_AUTH,
+            data=json.dumps(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         print("\n>>> User created successfully.")
     except HTTPError as http_error:

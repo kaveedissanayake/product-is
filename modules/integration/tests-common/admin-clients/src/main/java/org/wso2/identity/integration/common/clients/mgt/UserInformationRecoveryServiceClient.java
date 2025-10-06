@@ -31,9 +31,13 @@ import org.wso2.carbon.identity.mgt.stub.UserInformationRecoveryServiceIdentityE
 import org.wso2.carbon.identity.mgt.stub.UserInformationRecoveryServiceIdentityMgtServiceExceptionException;
 import org.wso2.carbon.identity.mgt.stub.UserInformationRecoveryServiceStub;
 import org.wso2.identity.integration.common.clients.AuthenticateStub;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 
 public class UserInformationRecoveryServiceClient {
+
+    private static final Log log = LogFactory.getLog(UserInformationRecoveryServiceClient.class);
 
 	private UserInformationRecoveryServiceStub infoRecoveryStub;
     private final String serviceName = "UserInformationRecoveryService";
@@ -56,8 +60,8 @@ public class UserInformationRecoveryServiceClient {
 		CaptchaInfoBean bean = null;
 		try {
 			bean = infoRecoveryStub.getCaptcha();
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error getting captcha", e);
 		}
 		return bean;
 	}
@@ -66,8 +70,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
     		bean = infoRecoveryStub.verifyUser(username, captcha);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error verifying user", e);
 		}
     	return bean;
     }
@@ -76,8 +80,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
     		bean = infoRecoveryStub.sendRecoveryNotification(username, key, notificationType);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error sending recovery notification", e);
 		}
     	return bean;
     }
@@ -87,8 +91,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
     		bean = infoRecoveryStub.verifyConfirmationCode(username, code, captcha);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error verifying confirmation code", e);
 		}
     	return bean;
     }
@@ -98,8 +102,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
     		bean = infoRecoveryStub.updatePassword(username, confirmationCode, newPassword);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error updating password", e);
 		}
     	return bean;
     }
@@ -108,8 +112,8 @@ public class UserInformationRecoveryServiceClient {
     	ChallengeQuestionIdsDTO bean = null;
     	try {
     		bean = infoRecoveryStub.getUserChallengeQuestionIds(username, confirmation);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error getting user challenge question ids", e);
 		}
     	return bean;
     }
@@ -119,8 +123,8 @@ public class UserInformationRecoveryServiceClient {
     	UserChallengesDTO bean = null;
     	try {
     		bean = infoRecoveryStub.getUserChallengeQuestion(userName, confirmation, questionId);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error getting user challenge question", e);
 		}
     	return bean;
     }
@@ -130,8 +134,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
 			bean = infoRecoveryStub.verifyUserChallengeAnswer(userName, confirmation, questionId, answer);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error verifying user challenge answer", e);
 		}
     	return bean;
     }
@@ -140,8 +144,8 @@ public class UserInformationRecoveryServiceClient {
     	ChallengeQuestionDTO[] questions = null;
     	try {
 			questions = infoRecoveryStub.getAllChallengeQuestions();
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error getting all challenge questions", e);
 		}
     	return questions;
     }
@@ -150,8 +154,8 @@ public class UserInformationRecoveryServiceClient {
     	UserIdentityClaimDTO[] claims = null;
     	try {
 			claims = infoRecoveryStub.getUserIdentitySupportedClaims(dialect);
-		} catch (UserInformationRecoveryServiceIdentityExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityExceptionException e) {
+            log.error("Error getting user identity supported claims", e);
 		}
     	return claims;
     }
@@ -161,8 +165,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
 			bean = infoRecoveryStub.verifyAccount(claims, captcha, tenantDomain);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error verifying account", e);
 		}
     	return bean;
     }
@@ -172,8 +176,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
 			bean = infoRecoveryStub.registerUser(userName, password, claims, profileName, tenantDomain);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error registering user", e);
 		}
     	return bean;
     }
@@ -183,8 +187,8 @@ public class UserInformationRecoveryServiceClient {
     	VerificationBean bean = null;
     	try {
 			bean = infoRecoveryStub.confirmUserSelfRegistration(username, code, captcha, tenantDomain);
-		} catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
-			e.printStackTrace();
+        } catch (UserInformationRecoveryServiceIdentityMgtServiceExceptionException e) {
+            log.error("Error confirming user self registration", e);
 		}
     	return bean;
     }

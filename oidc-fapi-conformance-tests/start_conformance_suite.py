@@ -6,7 +6,9 @@ import sys
 def start(file):
     try:
         os.chmod(file, 0o777)
-        process = subprocess.Popen("sudo -E docker-compose -f " + file + " up", shell=True, stdout=subprocess.PIPE)
+        process = subprocess.Popen([
+            "sudo", "-E", "docker-compose", "-f", file, "up"
+        ], stdout=subprocess.PIPE)
         while True:
             output = process.stdout.readline()
             if b'conformance-suite_server_1 exited with code 1' in output:

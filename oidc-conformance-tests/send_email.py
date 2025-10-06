@@ -20,6 +20,7 @@ import warnings
 import sys
 import smtplib, ssl
 import constants
+import os
 
 conformance_suite_url = sys.argv[1]
 github_run_number = str(sys.argv[2])
@@ -36,7 +37,13 @@ failed_count = 0
 warnings_count = 0
 total_tests_count = 0
 warnings.filterwarnings("ignore")
-plan_list = json.loads(requests.get(url=conformance_suite_url + "/api/plan?length=50", verify=False).content)
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
+VERIFY_TLS = os.getenv("VERIFY_TLS", "false").lower() in ("1", "true", "yes")
+plan_list = json.loads(requests.get(
+    url=conformance_suite_url + "/api/plan?length=50",
+    verify=VERIFY_TLS,
+    timeout=REQUEST_TIMEOUT,
+).content)
 # loop through all test plans and count fails, warnings and total test cases
 for test_plan in plan_list['data']:
     failed_tests_list = export_results.get_failed_tests(test_plan)

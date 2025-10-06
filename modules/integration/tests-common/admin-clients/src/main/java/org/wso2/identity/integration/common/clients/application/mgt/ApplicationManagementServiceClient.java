@@ -295,7 +295,7 @@ public class ApplicationManagementServiceClient {
         try {
             idps = stub.getAllIdentityProviders();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
         return idps;
     }

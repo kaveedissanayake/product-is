@@ -1,6 +1,7 @@
 import base64
 import uuid
 import requests
+import os
 import jwt
 from flask import request
 from flask import Flask, jsonify
@@ -48,10 +49,13 @@ def isJwt(accessToken):
     except jwt.DecodeError:
         return False
     
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
+VERIFY_TLS = os.getenv("VERIFY_TLS", "false").lower() in ("1", "true", "yes")
+
 def getCnfFromIntrospect(accessToken):
     headers = {'Authorization': 'Basic ' +  "YWRtaW46YWRtaW4=", 'Content-Type': 'application/x-www-form-urlencoded'}
     data = {'token': accessToken}
-    response = requests.post('https://localhost:9443/oauth2/introspect', headers=headers, data=data, verify=False)
+    response = requests.post('https://localhost:9443/oauth2/introspect', headers=headers, data=data, verify=VERIFY_TLS, timeout=REQUEST_TIMEOUT)
     if response.status_code == 200:
         introspect = response.json()
         print ("[INFO] Introspect response: \n", introspect)
@@ -111,7 +115,7 @@ def getThumbprintFromClientCertificate(request):
 def validateTokenWithIntrospect(accessToken):
     headers = {'Authorization': 'Basic ' +  "YWRtaW46YWRtaW4=", 'Content-Type': 'application/x-www-form-urlencoded'}
     data = {'token': accessToken}
-    response = requests.post('https://localhost:9443/oauth2/introspect', headers=headers, data=data, verify=False)
+    response = requests.post('https://localhost:9443/oauth2/introspect', headers=headers, data=data, verify=VERIFY_TLS, timeout=REQUEST_TIMEOUT)
     if response.status_code == 200:
         introspect = response.json()
         activeState = introspect.get('active')

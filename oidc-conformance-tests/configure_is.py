@@ -27,6 +27,10 @@ from requests.exceptions import HTTPError
 import constants
 from config import browser_configuration
 
+# Network safety defaults (overridable via env vars)
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
+VERIFY_TLS = os.getenv("VERIFY_TLS", "false").lower() in ("1", "true", "yes")
+
 headers = {
     'Content-Type': 'application/json',
     'Connection': 'keep-alive',
@@ -42,8 +46,13 @@ path_to_jacoco_exec = str(sys.argv[3])
 def dcr():
     print("\nDynamic Client Registration")
     try:
-        response = requests.post(url=constants.DCR_ENDPOINT, headers=constants.DCR_HEADERS,
-                             data=json.dumps(constants.DCR_BODY), verify=False)
+        response = requests.post(
+            url=constants.DCR_ENDPOINT,
+            headers=constants.DCR_HEADERS,
+            data=json.dumps(constants.DCR_BODY),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -60,7 +69,12 @@ def dcr():
 # retrieve the application ID associated with the provided application name
 def get_application_id(name):
     try:
-        response = requests.get(url=constants.APPLICATION_ENDPOINT, headers=constants.DCR_HEADERS, verify=False)
+        response = requests.get(
+            url=constants.APPLICATION_ENDPOINT,
+            headers=constants.DCR_HEADERS,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         application_list = json.loads(response.text)
         filtered_app_list = list(filter(lambda application_data: application_data["name"] == name, application_list["applications"]))
@@ -85,11 +99,20 @@ def subscribe_apis():
 
     try:
         # Create payloads to subcribe the APIs
-        response = requests.get(url=constants.API_RESOURCE_ENDPOINT, headers=constants.DCR_HEADERS, verify=False)
+        response = requests.get(
+            url=constants.API_RESOURCE_ENDPOINT,
+            headers=constants.DCR_HEADERS,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         total_api_resources_count = json.loads(response.text)["totalResults"]
-        response = requests.get(url=constants.API_RESOURCE_ENDPOINT + "?limit=" + str(total_api_resources_count),
-                                        headers=constants.DCR_HEADERS, verify=False)
+        response = requests.get(
+            url=constants.API_RESOURCE_ENDPOINT + "?limit=" + str(total_api_resources_count),
+            headers=constants.DCR_HEADERS,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         api_resources = json.loads(response.text)["apiResources"]
 
@@ -105,12 +128,22 @@ def subscribe_apis():
                 payloads[index]["id"] = api_resource["id"]
 
         for payload in payloads:
-            response = requests.post(url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/authorized-apis", headers=constants.DCR_HEADERS,
-                                data=json.dumps(payload), verify=False)
+            response = requests.post(
+                url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/authorized-apis",
+                headers=constants.DCR_HEADERS,
+                data=json.dumps(payload),
+                verify=VERIFY_TLS,
+                timeout=REQUEST_TIMEOUT,
+            )
             response.raise_for_status()
 
         # Allow admin role to access the subscribed APIs
-        response = requests.get(url=constants.ROLES_ENDPOINT + "?filter=audience.type+eq+organization", headers=constants.DCR_HEADERS, verify=False)
+        response = requests.get(
+            url=constants.ROLES_ENDPOINT + "?filter=audience.type+eq+organization",
+            headers=constants.DCR_HEADERS,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         admin_role = list(filter(lambda data: data["displayName"] == "admin", json.loads(response.text)["Resources"]))
         admin_role_id = admin_role[0]["id"]
@@ -124,8 +157,13 @@ def subscribe_apis():
                 ]
             }
         }
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id, headers=constants.DCR_HEADERS,
-                                data=json.dumps(role_update_payload), verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=constants.DCR_HEADERS,
+            data=json.dumps(role_update_payload),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -155,7 +193,13 @@ def get_access_token(client_id, client_secret, scope, url):
     }
     print("\nGetting access token")
     try:
-        response = requests.post(url=url, headers=token_headers, data=urlencode(body), verify=False)
+        response = requests.post(
+            url=url,
+            headers=token_headers,
+            data=urlencode(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         response_map = json.loads(response.content)
         print(response_map)
@@ -175,8 +219,12 @@ def get_access_token(client_id, client_secret, scope, url):
 # returns service provider details with given application id
 def get_service_provider_details(application_id):
     try:
-        response = requests.get(url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
-                                headers=headers, verify=False)
+        response = requests.get(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id + "/inbound-protocols/oidc",
+            headers=headers,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         response_json = json.loads(response.content)
         return {"clientId": response_json['clientId'], "clientSecret": response_json['clientSecret'], "applicationId": application_id}
@@ -197,11 +245,21 @@ def register_service_provider(config_file_path):
 
     print("\nRegistering service provider " + name)
     try:
-        response = requests.post(url=constants.APPLICATION_ENDPOINT, headers=headers, data=json.dumps(body), verify=False)
+        response = requests.post(
+            url=constants.APPLICATION_ENDPOINT,
+            headers=headers,
+            data=json.dumps(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         print("Service provider " + name + " registered")
-        response = requests.get(url=constants.APPLICATION_ENDPOINT + "?filter=name+eq+" + name, headers=headers,
-                            verify=False)
+        response = requests.get(
+            url=constants.APPLICATION_ENDPOINT + "?filter=name+eq=" + name,
+            headers=headers,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
         response_map = json.loads(response.content)
         print(response_map)
@@ -225,7 +283,13 @@ def set_user_claim_values(config_file_path):
 
     print("\nSetting user claim values")
     try:
-        response = requests.patch(url=constants.BASE_URL + "/scim2/Me", headers=headers, data=json.dumps(body), verify=False)
+        response = requests.patch(
+            url=constants.BASE_URL + "/scim2/Me",
+            headers=headers,
+            data=json.dumps(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -244,7 +308,13 @@ def change_local_claim_mapping(body, url):
     print("\nChanging local claim mapping for " + body['claimURI'])
     json_body = json.dumps(body)
     try:
-        response = requests.put(url=url, headers=headers, data=json_body, verify=False)
+        response = requests.put(
+            url=url,
+            headers=headers,
+            data=json_body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -265,8 +335,13 @@ def add_claim_service_provider(application_id, config_file_path):
 
     print("\nAdding claims to service provider")
     try:
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id, headers=headers, data=json.dumps(body),
-                                verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=headers,
+            data=json.dumps(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -287,8 +362,13 @@ def configure_acr(application_id, config_file_path):
 
     print("\nSetup advanced authentication scripts")
     try:
-        response = requests.patch(url=constants.APPLICATION_ENDPOINT + "/" + application_id, headers=headers,
-                                  data=json.dumps(body), verify=False)
+        response = requests.patch(
+            url=constants.APPLICATION_ENDPOINT + "/" + application_id,
+            headers=headers,
+            data=json.dumps(body),
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -307,8 +387,13 @@ def edit_scope(scope_id, body):
     print("\nChanging scope: " + scope_id)
     json_body = json.dumps(body)
     try:
-        response = requests.put(url=constants.BASE_URL + "/api/server/v1/oidc/scopes/" + scope_id, headers=headers,
-                                data=json_body, verify=False)
+        response = requests.put(
+            url=constants.BASE_URL + "/api/server/v1/oidc/scopes/" + scope_id,
+            headers=headers,
+            data=json_body,
+            verify=VERIFY_TLS,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except HTTPError as http_error:
         print(http_error)
@@ -431,9 +516,8 @@ def json_config_builder(service_provider_1, service_provider_2, output_file_path
     }
 
     json_config = json.dumps(config, indent=4)
-    f = open(output_file_path, "w")
-    f.write(json_config)
-    f.close()
+    with open(output_file_path, "w") as f:
+        f.write(json_config)
 
 
 # returns true if the process with given name is running
